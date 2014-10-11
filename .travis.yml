@@ -1,5 +1,8 @@
 reference: http://www.objc.io/issue-6/travis-ci.html
 language: objective-c
-cache: bundler
+
+before_install:
+  - cd Example/NSBundleLoginItemDemo/NSBundleLoginItemDemo
+
 script:
-- xctool test -workspace Example/NSBundleLoginItemDemo.xcworkspace -scheme NSBundleLoginItemDemo ONLY_ACTIVE_ARCH=NO
+  - xcodebuild -scheme NSBundleLoginItemDemo test
