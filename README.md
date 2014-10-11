@@ -1,4 +1,5 @@
 # NSBundle+LoginItem
+[![Build Status](https://travis-ci.org/nklizhe/NSBundle-LoginItem.svg?branch=master)](https://travis-ci.org/nklizhe/NSBundle-LoginItem)
 
 A NSBundle category for adding / removing the bundle to LoginItems.
 
