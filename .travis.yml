@@ -1,8 +1,4 @@
 reference: http://www.objc.io/issue-6/travis-ci.html
 language: objective-c
-
-before_install:
-  - cd Example/NSBundleLoginItemDemo
-
-script:
-  - xcodebuild -scheme NSBundleLoginItemDemo test
+xcode_project: Example/NSBundleLoginItemDemo/NSBundleLoginItemDemo.xcodeproj
+xcode_scheme: NSBundleLoginItemDemo
