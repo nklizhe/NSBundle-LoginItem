@@ -27,8 +27,9 @@
     if (sharedFileListItem) {
         CFRelease(sharedFileListItem);
     }
-    
-    CFRelease(sharedFileList);
+    if (sharedFileList) {
+        CFRelease(sharedFileList);
+    }
 }
 
 - (void)disableLoginItem
@@ -39,30 +40,31 @@
         return;
     }
 
-    NSArray *sharedFileListArray = nil;
     UInt32 seedValue;
-    
-    sharedFileListArray = CFBridgingRelease(LSSharedFileListCopySnapshot(sharedFileList, &seedValue));
-    
-    for (id sharedFile in sharedFileListArray) {
-        LSSharedFileListItemRef sharedFileListItem = (__bridge LSSharedFileListItemRef)sharedFile;
-        
-        CFURLRef appURL;
-        LSSharedFileListItemResolve(sharedFileListItem, 0, &appURL, NULL);
-        
-        if (appURL == NULL) {
-            continue;
+    CFArrayRef sharedFileListArray = LSSharedFileListCopySnapshot(sharedFileList, &seedValue);
+    if (sharedFileListArray) {
+        for (id sharedFile in (__bridge NSArray *)sharedFileListArray) {
+            if (!sharedFile) {
+                continue;
+            }
+            LSSharedFileListItemRef sharedFileListItem = (__bridge LSSharedFileListItemRef)sharedFile;
+            
+            CFURLRef appURL;
+            LSSharedFileListItemResolve(sharedFileListItem, 0, &appURL, NULL);
+            
+            if (appURL == NULL) {
+                continue;
+            }
+            
+            NSString *resolvedPath = [(__bridge NSURL *)appURL path];
+            if ([resolvedPath compare:self.bundlePath] == NSOrderedSame) {
+                LSSharedFileListItemRemove(sharedFileList, sharedFileListItem);
+            }
+            CFRelease(appURL);
         }
-        
-        NSString *resolvedPath = [(__bridge NSURL *)appURL path];
-        if ([resolvedPath compare:self.bundlePath] == NSOrderedSame) {
-            LSSharedFileListItemRemove(sharedFileList, sharedFileListItem);
-        }
-        
-        CFRelease(appURL);
+        CFRelease(sharedFileListArray);
+        CFRelease(sharedFileList);
     }
-    
-    CFRelease(sharedFileList);
 }
 
 - (BOOL)isLoginItemEnabled
@@ -74,31 +76,29 @@
     }
     
     BOOL bFound = NO;
-    NSArray *sharedFileListArray = nil;
     UInt32 seedValue;
-    
-    sharedFileListArray = CFBridgingRelease(LSSharedFileListCopySnapshot(sharedFileList, &seedValue));
-    
-    for (id sharedFile in sharedFileListArray) {
-        LSSharedFileListItemRef item = (__bridge LSSharedFileListItemRef)sharedFile;
-        
-        CFURLRef appURL = NULL;
-        LSSharedFileListItemResolve(item, 0, (CFURLRef *)&appURL, NULL);
-        if (!appURL) {
-            continue;
-        }
+    CFArrayRef sharedFileListArray = LSSharedFileListCopySnapshot(sharedFileList, &seedValue);
+    if (sharedFileListArray) {
+        for (id sharedFile in (__bridge NSArray *)sharedFileListArray) {
+            LSSharedFileListItemRef item = (__bridge LSSharedFileListItemRef)sharedFile;
+            
+            CFURLRef appURL = NULL;
+            LSSharedFileListItemResolve(item, 0, (CFURLRef *)&appURL, NULL);
+            if (!appURL) {
+                continue;
+            }
 
-        NSString *resolvedApplicationPath = [(__bridge NSURL *)appURL path];
-        CFRelease(appURL);
-        
-        if ([resolvedApplicationPath compare:self.bundlePath] == NSOrderedSame) {
-            bFound = YES;
-            break;
+            NSString *resolvedApplicationPath = [(__bridge NSURL *)appURL path];
+            CFRelease(appURL);
+            
+            if ([resolvedApplicationPath compare:self.bundlePath] == NSOrderedSame) {
+                bFound = YES;
+                break;
+            }
         }
+        CFRelease(sharedFileListArray);
+        CFRelease(sharedFileList);
     }
-    
-    CFRelease(sharedFileList);
-    
     return bFound;
 }
 
