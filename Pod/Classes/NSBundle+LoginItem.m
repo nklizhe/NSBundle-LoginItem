@@ -62,7 +62,6 @@
             }
             CFRelease(appURL);
         }
-        CFRelease(sharedFileListArray);
         CFRelease(sharedFileList);
     }
 }
@@ -96,7 +95,6 @@
                 break;
             }
         }
-        CFRelease(sharedFileListArray);
         CFRelease(sharedFileList);
     }
     return bFound;

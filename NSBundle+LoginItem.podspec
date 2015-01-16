@@ -5,7 +5,7 @@ Pod::Spec.new do |s|
   s.homepage         = "https://github.com/nklizhe/NSBundle-LoginItem"
   s.license          = 'MIT'
   s.author           = { "Tom Li" => "nklizhe@gmail.com" }
-  s.source           = { :git => "https://github.com/xvtom/NSBundle-LoginItem.git", :tag => 'v1.0.1' }
+  s.source           = { :git => "https://github.com/xvtom/NSBundle-LoginItem.git", :tag => 'v1.0.2' }
 
   s.platform     = :osx, '10.6'
   s.requires_arc = true
