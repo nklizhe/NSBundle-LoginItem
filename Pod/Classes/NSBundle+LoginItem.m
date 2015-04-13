@@ -6,6 +6,7 @@
 //
 
 #import "NSBundle+LoginItem.h"
+#import <AppKit/AppKit.h>
 
 @implementation NSBundle (LoginItem)
 
@@ -50,7 +51,14 @@
             LSSharedFileListItemRef sharedFileListItem = (__bridge LSSharedFileListItemRef)sharedFile;
             
             CFURLRef appURL;
-            LSSharedFileListItemResolve(sharedFileListItem, 0, &appURL, NULL);
+            if (floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_9) {
+                appURL = LSSharedFileListItemCopyResolvedURL(sharedFileListItem, 9, NULL);
+            } else {
+                OSStatus ret = LSSharedFileListItemResolve(sharedFileListItem, 0, &appURL, NULL);
+                if (ret != 0) {
+                    continue;
+                }
+            }
             
             if (appURL == NULL) {
                 continue;
