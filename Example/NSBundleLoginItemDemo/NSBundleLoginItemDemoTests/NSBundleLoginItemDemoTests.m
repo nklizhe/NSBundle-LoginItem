@@ -42,4 +42,18 @@
     
 }
 
+- (void)testDisableLoginItem {
+    NSBundle *mainBundle = [NSBundle mainBundle];
+    BOOL enabled = [mainBundle isLoginItemEnabled];
+    XCTAssert(enabled == NO, @"LoginItem should be disabled initially");
+   
+    for (int i=0; i<1000; i++) {
+        [mainBundle disableLoginItem];
+        XCTAssert(![mainBundle isLoginItemEnabled], @"LoginItem should be disabled again");
+    }
+    
+    [mainBundle disableLoginItem];
+    XCTAssert(![mainBundle isLoginItemEnabled], @"LoginItem should be disabled again");
+}
+
 @end
