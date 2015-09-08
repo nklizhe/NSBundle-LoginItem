@@ -90,9 +90,10 @@
             LSSharedFileListItemRef item = (__bridge LSSharedFileListItemRef)sharedFile;
             
             CFURLRef appURL = NULL;
-            LSSharedFileListItemResolve(item, 0, (CFURLRef *)&appURL, NULL);
-            if (!appURL) {
-                continue;
+            if (floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_9) {
+                appURL = LSSharedFileListItemCopyResolvedURL(item, kLSSharedFileListNoUserInteraction, NULL);
+            } else {
+                LSSharedFileListItemResolve(item, 0, (CFURLRef *)&appURL, NULL);
             }
 
             NSString *resolvedApplicationPath = [(__bridge NSURL *)appURL path];
