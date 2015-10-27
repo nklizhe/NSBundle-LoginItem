@@ -70,8 +70,9 @@
             }
             CFRelease(appURL);
         }
-        CFRelease(sharedFileList);
+        CFRelease(sharedFileListArray);
     }
+    CFRelease(sharedFileList);
 }
 
 - (BOOL)isLoginItemEnabled
@@ -106,8 +107,9 @@
                 break;
             }
         }
-        CFRelease(sharedFileList);
+        CFRelease(sharedFileListArray);
     }
+    CFRelease(sharedFileList);
     return bFound;
 }
 
