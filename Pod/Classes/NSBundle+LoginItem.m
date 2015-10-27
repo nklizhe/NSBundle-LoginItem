@@ -97,7 +97,9 @@
             }
 
             NSString *resolvedApplicationPath = [(__bridge NSURL *)appURL path];
-            CFRelease(appURL);
+            if(appURL) {
+                CFRelease(appURL);
+            }
             
             if ([resolvedApplicationPath compare:self.bundlePath] == NSOrderedSame) {
                 bFound = YES;
