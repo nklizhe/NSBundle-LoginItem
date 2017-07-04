@@ -70,8 +70,9 @@
             }
             CFRelease(appURL);
         }
-        CFRelease(sharedFileList);
+        CFRelease(sharedFileListArray);
     }
+    CFRelease(sharedFileList);
 }
 
 - (BOOL)isLoginItemEnabled
@@ -97,15 +98,18 @@
             }
 
             NSString *resolvedApplicationPath = [(__bridge NSURL *)appURL path];
-            CFRelease(appURL);
+            if(appURL) {
+                CFRelease(appURL);
+            }
             
             if ([resolvedApplicationPath compare:self.bundlePath] == NSOrderedSame) {
                 bFound = YES;
                 break;
             }
         }
-        CFRelease(sharedFileList);
+        CFRelease(sharedFileListArray);
     }
+    CFRelease(sharedFileList);
     return bFound;
 }
 
