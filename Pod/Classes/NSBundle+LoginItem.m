@@ -10,107 +10,115 @@
 
 @implementation NSBundle (LoginItem)
 
+//-------------------------------------------------------------------------------------------------------------
 - (void)enableLoginItem
 {
-    if ([self isLoginItemEnabled]) {
+    if([self isLoginItemEnabled]) {
         return;
     }
     
-    LSSharedFileListRef sharedFileList = LSSharedFileListCreate(NULL, kLSSharedFileListSessionLoginItems, NULL);
-    if (!sharedFileList) {
-        NSLog(@"Unable to create shared file list!");
-        return;
-    }
+    [self setEnabledAtLogin:YES];
+}
 
-    NSURL *appURL = [NSURL fileURLWithPath:self.bundlePath];
+//-------------------------------------------------------------------------------------------------------------
+- (void)disableLoginItem
+{
+    [self setEnabledAtLogin:NO];
+}
+
+//-------------------------------------------------------------------------------------------------------------
+- (void)setEnabledAtLogin:(BOOL)enabled
+{
+    [self iterateOverLoginItemsWithBlock:^(LSSharedFileListRef sharedFileList, LSSharedFileListItemRef sharedFileListItem, NSURL *appURL) {
+        NSBundle *appBundle = [NSBundle bundleWithURL:appURL];
+        if(appBundle && [appBundle.bundleIdentifier isEqualToString:self.bundleIdentifier]) {
+            LSSharedFileListItemRemove(sharedFileList, sharedFileListItem);
+        }
+    }];
     
-    LSSharedFileListItemRef sharedFileListItem = LSSharedFileListInsertItemURL(sharedFileList, kLSSharedFileListItemLast, NULL, NULL, (__bridge CFURLRef)appURL, NULL, NULL);
-    if (sharedFileListItem) {
-        CFRelease(sharedFileListItem);
-    }
-    if (sharedFileList) {
+    if(enabled) {
+        LSSharedFileListRef sharedFileList = LSSharedFileListCreate(NULL, kLSSharedFileListSessionLoginItems, NULL);
+        if(!sharedFileList) {
+            NSLog(@"Unable to create shared file list!");
+            return;
+        }
+        NSURL *appURL = [NSURL fileURLWithPath:self.bundlePath];
+        LSSharedFileListItemRef sharedFileListItem = LSSharedFileListInsertItemURL(sharedFileList, kLSSharedFileListItemLast, NULL, NULL, (__bridge CFURLRef)appURL, NULL, NULL);
+        if(sharedFileListItem) {
+            CFRelease(sharedFileListItem);
+        }
         CFRelease(sharedFileList);
     }
 }
 
-- (void)disableLoginItem
+//-------------------------------------------------------------------------------------------------------------
+- (BOOL)isLoginItemEnabled
+{
+    __block BOOL result = NO;
+    [self iterateOverLoginItemsWithBlock:^(LSSharedFileListRef sharedFileList, LSSharedFileListItemRef sharedFileListItem, NSURL *appURL) {
+        NSString *resolvedApplicationPath = [appURL path];
+        if(resolvedApplicationPath && [resolvedApplicationPath compare:self.bundlePath] == NSOrderedSame) {
+            result = YES;
+        }
+    }];
+    return result;
+}
+
+//-------------------------------------------------------------------------------------------------------------
+- (void)setHiddenAtLogin:(BOOL)hidden
+{
+    NSURL *myURL = [NSURL fileURLWithPath:self.bundlePath];
+    
+    [self iterateOverLoginItemsWithBlock:^(LSSharedFileListRef sharedFileList, LSSharedFileListItemRef sharedFileListItem, NSURL *appURL) {
+        if([myURL isEqualTo:appURL]) {
+            LSSharedFileListItemSetProperty(sharedFileListItem, kLSSharedFileListLoginItemHidden, (__bridge CFBooleanRef)@(hidden));
+        }
+    }];
+}
+
+//-------------------------------------------------------------------------------------------------------------
+- (BOOL)isHiddenAtLogin
+{
+    __block BOOL result = NO;
+    NSURL *myURL = [NSURL fileURLWithPath:self.bundlePath];
+    
+    [self iterateOverLoginItemsWithBlock:^(LSSharedFileListRef sharedFileList, LSSharedFileListItemRef sharedFileListItem, NSURL *appURL) {
+        if([myURL isEqualTo:appURL]) {
+            CFBooleanRef value = LSSharedFileListItemCopyProperty(sharedFileListItem, kLSSharedFileListLoginItemHidden);
+            if(value) {
+                result = CFBooleanGetValue(value);
+                CFRelease(value);
+            }
+        }
+    }];
+    
+    return result;
+}
+
+//-------------------------------------------------------------------------------------------------------------
+- (void)iterateOverLoginItemsWithBlock:(void(^)(LSSharedFileListRef, LSSharedFileListItemRef, NSURL*))block
 {
     LSSharedFileListRef sharedFileList = LSSharedFileListCreate(NULL, kLSSharedFileListSessionLoginItems, NULL);
-    if (!sharedFileList) {
+    if(!sharedFileList) {
         NSLog(@"Unable to create shared file list!");
         return;
     }
-
+    
     UInt32 seedValue;
     CFArrayRef sharedFileListArray = LSSharedFileListCopySnapshot(sharedFileList, &seedValue);
-    if (sharedFileListArray) {
-        for (id sharedFile in (__bridge NSArray *)sharedFileListArray) {
-            if (!sharedFile) {
-                continue;
-            }
-            LSSharedFileListItemRef sharedFileListItem = (__bridge LSSharedFileListItemRef)sharedFile;
-            
-            CFURLRef appURL;
-            if (floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_9) {
-                appURL = LSSharedFileListItemCopyResolvedURL(sharedFileListItem, 9, NULL);
-            } else {
-                OSStatus ret = LSSharedFileListItemResolve(sharedFileListItem, 0, &appURL, NULL);
-                if (ret != 0) {
-                    continue;
+    if(sharedFileListArray) {
+        for(id sharedFile in (__bridge NSArray *)sharedFileListArray) {
+            if(sharedFile) {
+                LSSharedFileListItemRef sharedFileListItem = (__bridge LSSharedFileListItemRef)sharedFile;
+                CFURLRef appURL = LSSharedFileListItemCopyResolvedURL(sharedFileListItem, kLSSharedFileListNoUserInteraction, NULL);
+                if(appURL) {
+                    block(sharedFileList, sharedFileListItem, (__bridge NSURL *)appURL);
+                    CFRelease(appURL);
                 }
             }
-            
-            if (appURL == NULL) {
-                continue;
-            }
-            
-            NSString *resolvedPath = [(__bridge NSURL *)appURL path];
-            if ([resolvedPath compare:self.bundlePath] == NSOrderedSame) {
-                LSSharedFileListItemRemove(sharedFileList, sharedFileListItem);
-            }
-            CFRelease(appURL);
         }
         CFRelease(sharedFileListArray);
     }
     CFRelease(sharedFileList);
 }
-
-- (BOOL)isLoginItemEnabled
-{
-    LSSharedFileListRef sharedFileList = LSSharedFileListCreate(NULL, kLSSharedFileListSessionLoginItems, NULL);
-    if (!sharedFileList) {
-        NSLog(@"Unable to create shared file list!");
-        return NO;
-    }
-    
-    BOOL bFound = NO;
-    UInt32 seedValue;
-    CFArrayRef sharedFileListArray = LSSharedFileListCopySnapshot(sharedFileList, &seedValue);
-    if (sharedFileListArray) {
-        for (id sharedFile in (__bridge NSArray *)sharedFileListArray) {
-            LSSharedFileListItemRef item = (__bridge LSSharedFileListItemRef)sharedFile;
-            
-            CFURLRef appURL = NULL;
-            if (floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_9) {
-                appURL = LSSharedFileListItemCopyResolvedURL(item, kLSSharedFileListNoUserInteraction, NULL);
-            } else {
-                LSSharedFileListItemResolve(item, 0, (CFURLRef *)&appURL, NULL);
-            }
-
-            NSString *resolvedApplicationPath = [(__bridge NSURL *)appURL path];
-            if(appURL) {
-                CFRelease(appURL);
-            }
-            
-            if ([resolvedApplicationPath compare:self.bundlePath] == NSOrderedSame) {
-                bFound = YES;
-                break;
-            }
-        }
-        CFRelease(sharedFileListArray);
-    }
-    CFRelease(sharedFileList);
-    return bFound;
-}
-
 @end
