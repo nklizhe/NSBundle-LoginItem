@@ -21,4 +21,6 @@
 
 - (BOOL)isHiddenAtLogin;
 
+@property (atomic, assign) BOOL openAtLogin;
+
 @end

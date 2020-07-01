@@ -10,6 +10,14 @@
 
 @implementation NSBundle (LoginItem)
 
+- (BOOL)openAtLogin {
+    return [self isLoginItemEnabled];
+}
+
+- (void)setOpenAtLogin:(BOOL)openAtLogin {
+    [self setEnabledAtLogin:openAtLogin];
+}
+
 //-------------------------------------------------------------------------------------------------------------
 - (void)enableLoginItem
 {
