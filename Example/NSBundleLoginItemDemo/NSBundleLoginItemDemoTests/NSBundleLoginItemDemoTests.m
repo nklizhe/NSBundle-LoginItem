@@ -36,10 +36,11 @@
     
     [mainBundle enableLoginItem];
     XCTAssert([mainBundle isLoginItemEnabled], @"LoginItem should be enabled now");
-    
+    XCTAssertTrue(mainBundle.openAtLogin, @"LoginItem should be enabled now");
+
     [mainBundle disableLoginItem];
     XCTAssert(![mainBundle isLoginItemEnabled], @"LoginItem should be disabled again");
-    
+    XCTAssertFalse(mainBundle.openAtLogin, @"LoginItem should be disabled now");
 }
 
 - (void)testDisableLoginItem {

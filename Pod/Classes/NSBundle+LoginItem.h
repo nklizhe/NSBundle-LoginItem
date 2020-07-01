@@ -15,5 +15,13 @@
 
 - (BOOL)isLoginItemEnabled;
 
+- (void)setEnabledAtLogin:(BOOL)enabled;
+
+- (void)setHiddenAtLogin:(BOOL)hidden;
+
+- (BOOL)isHiddenAtLogin;
+
+- (BOOL)openAtLogin;
+- (void)setOpenAtLogin:(BOOL)openAtLogin;
 
 @end
